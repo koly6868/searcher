@@ -1,0 +1,10 @@
+{
+    "searchers" : [
+        {
+            "Name":      "Name",
+            "KeyType":   "string",
+            "Key":       "Name"
+        }
+    ],
+    "ModelName": "TestModel"
+}
