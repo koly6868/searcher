@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	fp := flag.String("cfg", "example.json", "gen --cfg example.json")
-	basePath := "../"
+	fp := flag.String("cfg", "cmd/example.json", "gen --cfg example.json")
+	basePath := ""
 	flag.Parse()
 	f, err := os.Open(*fp)
 	closeProgramIfErr(err)

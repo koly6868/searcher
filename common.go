@@ -1,5 +1,7 @@
 package searcher
 
+//go:generate go run cmd/gen.go
+
 type GenData struct {
 	Searchers []struct {
 		Name    string `json:"Name"`

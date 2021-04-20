@@ -1,31 +1,21 @@
 package searcher
 
 import (
-	"bytes"
-	"os"
-	"path"
-	"text/template"
+	"sort"
 
-	"golang.org/x/tools/imports"
+	"github.com/labstack/gommon/log"
 )
 
-const creativeSearcherPath = "generated_creative_search.go"
-const creativeSearcherTemplate = `
-// CreativeSearcher ...
 type CreativeSearcher interface {
 	Find(q *Query) ([]TestModel, error)
 }
 
-// CreativeSearh ...
 type CreativeSearh struct {
 	modules []searhModule
 }
 
-// NewCreativeSearh creates search system.
-// data should no be changed after initialization.
 func NewCreativeSearh(data []TestModel) CreativeSearcher {
-	modules := []searhModule{
-	}
+	modules := []searhModule{}
 
 	for _, module := range modules {
 		module.init(data)
@@ -36,7 +26,6 @@ func NewCreativeSearh(data []TestModel) CreativeSearcher {
 	}
 }
 
-// Find ...
 func (cs *CreativeSearh) Find(q *Query) ([]TestModel, error) {
 	teasers := []TestModel{}
 
@@ -59,7 +48,7 @@ func (cs *CreativeSearh) Find(q *Query) ([]TestModel, error) {
 	for i := 0; i < n; {
 		creative, err := results[0].next()
 		if err != nil {
-			// early tteration stop
+
 			if _, ok := err.(*StopIterationError); ok {
 				break
 			}
@@ -86,42 +75,4 @@ func (cs *CreativeSearh) Find(q *Query) ([]TestModel, error) {
 type searhModule interface {
 	init([]TestModel)
 	find(*Query) searchResult
-}
-`
-
-func GenCreativeSearcher(gd *GenData, basePath string) error {
-	codeBuff := &bytes.Buffer{}
-	data, err := genCreativeSearcher(gd)
-	if err != nil {
-		return err
-	}
-
-	_, err = codeBuff.WriteString(gencCodeHeader)
-	if err != nil {
-		return err
-	}
-
-	_, err = codeBuff.Write(data)
-	code, err := imports.Process(path.Join(basePath, creativeSearcherPath), codeBuff.Bytes(), &imports.Options{
-		FormatOnly: false,
-	})
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create(path.Join(basePath, creativeSearcherPath))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	f.Write(code)
-	return err
-}
-
-func genCreativeSearcher(gd *GenData) ([]byte, error) {
-	t := template.Must(template.New("creative_search").Parse(creativeSearcherTemplate))
-	b := &bytes.Buffer{}
-	err := t.Execute(b, gd)
-
-	return b.Bytes(), err
 }
