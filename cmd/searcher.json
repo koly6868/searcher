@@ -4,7 +4,12 @@
             "Name":      "Name",
             "KeyType":   "string",
             "Key":       "Name"
+        },
+        {
+            "Name":      "Age",
+            "KeyType":   "int",
+            "Key":       "Age"
         }
     ],
-    "ModelName": "example.TestModell"
+    "ModelName": "example.TestModel"
 }

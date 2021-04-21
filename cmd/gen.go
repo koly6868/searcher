@@ -6,14 +6,22 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/go-git/go-git"
 	"github.com/koly6868/searcher"
 )
 
+const tempDir = "temp"
+
 func main() {
-	fp := flag.String("cfg", "cmd/example.json", "gen --cfg example.json")
-	basePath := ""
+
+	configFPath := flag.String("cfg", "cmd/example.json", "gen --cfg example.json")
+	dstFPath := flag.String("d", "cmd/example.json", "gen --d .")
 	flag.Parse()
-	f, err := os.Open(*fp)
+
+	err := GitClone("github.com/koly6868/searcher", tempDir)
+	closeProgramIfErr(err)
+
+	f, err := os.Open(*configFPath)
 	closeProgramIfErr(err)
 	defer f.Close()
 
@@ -27,15 +35,25 @@ func main() {
 	err = searcher.GenQuery(gd, basePath)
 	closeProgramIfErr(err)
 
-	err = searcher.GenerateCrativeSearchers(gd, basePath)
+	err = searcher.GenerateSearchers(gd, basePath)
 	closeProgramIfErr(err)
 
-	err = searcher.GenCreativeSearcher(gd, basePath)
+	err = searcher.GenSearcher(gd, basePath)
 	closeProgramIfErr(err)
 
-	err = searcher.GenCreativeSerachResult(gd, basePath)
+	err = searcher.GenElementSerachResult(gd, basePath)
 	closeProgramIfErr(err)
 
+}
+
+func GitClone(repoPath, directory string) error {
+	_, err := git.PlainClone(directory, false, &git.CloneOptions{
+		URL: "https://" + repoPath,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func closeProgramIfErr(err error) {

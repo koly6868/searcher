@@ -5,40 +5,41 @@ import (
 	"fmt"
 	"path"
 	"text/template"
-	"unicode"
 )
 
 var moduleTemplate = `
-type {{.NameLower}} struct {
+type {{.Name}} struct {
 	data        map[{{.KeyType}}][]*{{.ModelName}}
 	sortSliceFn func([]*{{.ModelName}})
+	searchFn func([]*example.TestModel, *example.TestModel) int
 }
 
-func New{{.Name}}(sortSliceFn func([]*{{.ModelName}})) SearhModule {
-	return &{{.NameLower}}{
-		sortSliceFn: sortSliceFn,
-		data:        map[string][]*{{.ModelName}}{},
-	}
-}
+func (sm *{{.Name}}) init(data []{{.ModelName}},
+	 sortSliceFn func([]*{{.ModelName}}),
+	 searchFn func([]*example.TestModel, *example.TestModel) int) {
+	
+	sm.data = map[{{.KeyType}}][]*{{.ModelName}}{}
+	sm.sortSliceFn = sortSliceFn
+	sm.searchFn = searchFn
 
-func (sm {{.NameLower}}) init(data []{{.ModelName}}) {
 	for i, e := range data {
 		sm.data[e.{{.Key}}] = append(sm.data[e.{{.Key}}], &data[i])
 	}
 
 	for k := range sm.data {
-		sm.sortSliceFn(sm.data[k])
+		sortSliceFn(sm.data[k])
 	}
 }
 
-func (sm {{.NameLower}}) find(q *Query) searchResult {
+func (sm *{{.Name}}) find(q *Query) searchResult {
 	return newSimpleResult(
-		sm.data[q.{{.Key}}])
+		sm.data[q.{{.Key}}],
+		sm.searchFn)
 }`
 
 const serachModulesPath = "generated_search_modules.go"
 
-func GenerateCrativeSearchers(gd *GenData, basePath string) error {
+func GenerateSearchers(gd *GenData, basePath string) error {
 	codeBuff := &bytes.Buffer{}
 	codeBuff.WriteString(gencCodeHeader)
 
@@ -64,12 +65,6 @@ type SearchModuleGenData struct {
 	KeyType   string
 	Key       string
 	ModelName string
-}
-
-func (smgd *SearchModuleGenData) NameLower() string {
-	a := []rune(smgd.Name)
-	a[0] = unicode.ToLower(a[0])
-	return string(a)
 }
 
 func (smgd *SearchModuleGenData) normalize() error {

@@ -6,7 +6,8 @@ import (
 	"text/template"
 )
 
-const creativeSerachResulTemplate = `
+const serachResulPath = "generated_search_result.go"
+const serachResulTemplate = `
 type searchResult interface {
 	contains(*{{.ModelName}}) bool
 	len() int
@@ -17,25 +18,23 @@ type searchResult interface {
 type simpleResult struct {
 	data    []*{{.ModelName}}
 	pointer int
+	searchFn func([]*example.TestModel, *example.TestModel) int
 }
 
-func newSimpleResult(data []*{{.ModelName}}) *simpleResult {
+func newSimpleResult(data []*{{.ModelName}}, searchFn func([]*example.TestModel, *example.TestModel) int) *simpleResult {
 	if data == nil {
 		data = []*{{.ModelName}}{}
 	}
 	return &simpleResult{
 		data: data,
+		searchFn : searchFn,
 	}
 }
 
-func (sr *simpleResult) contains(creative *{{.ModelName}}) bool {
-	index := sort.Search(
-		len(sr.data),
-		func(index int) bool {
-			return creative.ID <= sr.data[index].ID
-		})
+func (sr *simpleResult) contains(element *{{.ModelName}}) bool {
+	index := sr.searchFn(sr.data, element)
 
-	return (index < len(sr.data)) && (sr.data[index].ID == creative.ID)
+	return (index < len(sr.data)) && (sr.data[index].ID == element.ID)
 }
 
 func (sr *simpleResult) len() int {
@@ -95,26 +94,26 @@ func (ir *intesectionResult) next() (*{{.ModelName}}, error) {
 		return nil, &StopIterationError{msg: "empty"}
 	}
 	for {
-		creative, err := ir.results[0].next()
+		element, err := ir.results[0].next()
 		if err != nil {
 			return nil, err
 		}
-		creativeInItersection := true
+		elementInItersection := true
 		for j := 1; j < len(ir.results); j++ {
-			if !ir.results[j].contains(creative) {
-				creativeInItersection = false
+			if !ir.results[j].contains(element) {
+				elementInItersection = false
 				break
 			}
 		}
-		if creativeInItersection {
-			return creative, nil
+		if elementInItersection {
+			return element, nil
 		}
 	}
 }
 
-func (ir *intesectionResult) contains(creative *{{.ModelName}}) bool {
+func (ir *intesectionResult) contains(element *{{.ModelName}}) bool {
 	for _, e := range ir.results {
-		if !e.contains(creative) {
+		if !e.contains(element) {
 			return false
 		}
 	}
@@ -122,14 +121,14 @@ func (ir *intesectionResult) contains(creative *{{.ModelName}}) bool {
 }
 `
 
-func GenCreativeSerachResult(gd *GenData, basePath string) error {
+func GenElementSerachResult(gd *GenData, basePath string) error {
 	b := &bytes.Buffer{}
 	b.WriteString(gencCodeHeader)
 
-	t := template.Must(template.New("creativeSerachResulTemplate").Parse(creativeSerachResulTemplate))
+	t := template.Must(template.New("serachResultTemplate").Parse(serachResulTemplate))
 	err := t.Execute(b, gd)
 	if err != nil {
 		return err
 	}
-	return FormatAndWrite(path.Join(basePath, "generated_creative_search_result.go"), b.Bytes())
+	return FormatAndWrite(path.Join(basePath, serachResulPath), b.Bytes())
 }

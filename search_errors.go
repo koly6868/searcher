@@ -20,12 +20,12 @@ func (pre *PartialResultError) Error() string {
 	return pre.msg
 }
 
-// CreativeSearhInitializationError ...
-type CreativeSearhInitializationError struct {
+// SearherInitializationError ...
+type SearherInitializationError struct {
 	msg string
 }
 
-func (csie *CreativeSearhInitializationError) Error() string {
+func (csie *SearherInitializationError) Error() string {
 	return csie.msg
 }
 

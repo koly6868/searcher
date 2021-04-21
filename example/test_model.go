@@ -1,6 +1,7 @@
 package example
 
-type TestModell struct {
+type TestModel struct {
 	ID   int
 	Name string
+	Age  int
 }

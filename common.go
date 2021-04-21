@@ -6,8 +6,6 @@ import (
 	"golang.org/x/tools/imports"
 )
 
-//go:generate go run cmd/gen.go -cfg cmd/searcher.json
-
 type GenData struct {
 	Searchers []struct {
 		Name    string `json:"Name"`

@@ -1,4 +1,4 @@
-# Creative searcher
+# Element searcher
 
 ## How to use
 
@@ -15,41 +15,88 @@
 
 ## Example
 
-1. Define sort function 
+1. change file cmd/searcher.json in following way
+```
+{
+    "searchers" : [
+        {
+            "Name":      "Name",
+            "KeyType":   "string",
+            "Key":       "Name"
+        },
+        {
+            "Name":      "Age",
+            "KeyType":   "int",
+            "Key":       "Age"
+        }
+    ],
+    "ModelName": "example.TestModel"
+}
+```
+
+2. run ```go generate```
+
+3.  create project and import packages
 
 ```
-func defaultSortFn(data []*TestModel) {
+	"github.com/koly6868/searcher"
+	"github.com/koly6868/searcher/example"
+```
+
+4. define sort and coressponding serach functions for the model
+```
+func defaultSortFn(data []*example.TestModel) {
 	sort.Slice(data, func(i, j int) bool {
 		return data[i].ID < data[j].ID
 	})
 }
+
+func defaultSerachFn(data []*example.TestModel, e *example.TestModel) int {
+	return sort.Search(
+		len(data),
+		func(index int) bool {
+			return e.ID <= data[index].ID
+		})
+}
 ```
 
-2. Define  searcher, serach modules and test
-
+5. create sample data and searcher. Call Find method of searcher on diffirent queries
 ```
-func TestSearcher(t *testing.T) {
-	targetInd := 3
-	data := []TestModel{
-		{ID: 1, Name: "ass"},
-		{ID: 2, Name: "asss"},
-		{ID: 3, Name: "assss"},
-		{ID: 4, Name: "awss"},
-		{ID: 5, Name: "assw"},
+func main() {
+	data := []example.TestModel{
+		{ID: 1, Name: "ass", Age: 32},
+		{ID: 2, Name: "asss", Age: 3},
+		{ID: 3, Name: "assss", Age: 23},
+		{ID: 4, Name: "awss", Age: 12},
+		{ID: 5, Name: "assw", Age: 45},
 	}
-	s := NewCreativeSearh(data, []searhModule{
-		NewNameSearchModule(defaultSortFn),
-	})
+	s := searcher.NewSearher(data, []searcher.SearhModule{
+		&searcher.NameSearchModule{},
+		&searcher.AgeSearchModule{},
+	}, defaultSortFn, defaultSerachFn)
 
-	res, err := s.Find(&Query{
+	// prints res :[]example.TestModel{example.TestModel{ID:4, Name:"awss", Age:12}}; err: %!s(<nil>)
+	res, err := s.Find(&searcher.Query{
 		Count: 1,
 		Name:  "awss",
+		Age:   12,
 	})
-	if err != nil {
-		t.Error(err)
-	}
-	if len(res) != 1 || res[0] != data[targetInd] {
-		t.Errorf("got: %#v;\nwant: %#v", res, data[targetInd])
-	}
+	fmt.Printf("res :%#v; err: %s \n", res, err)
+
+	// prints res :[]example.TestModel{}; err: %!s(<nil>)
+	res, err = s.Find(&searcher.Query{
+		Count: 1,
+		Name:  "s",
+		Age:   12,
+	})
+	fmt.Printf("res :%#v; err: %s \n", res, err)
+
+	// res :[]example.TestModel{}; err: %!s(<nil>)
+	res, err = s.Find(&searcher.Query{
+		Count: 0,
+		Name:  "s",
+		Age:   12,
+	})
+	fmt.Printf("res :%#v; err: %s \n", res, err)
 }
 ```
