@@ -1,29 +1,34 @@
 package searcher
 
-import "sort"
+import (
+	"bytes"
+	"path"
+	"text/template"
+)
 
+const creativeSerachResulTemplate = `
 type searchResult interface {
-	contains(*TestModel) bool
+	contains(*{{.ModelName}}) bool
 	len() int
-	next() (*TestModel, error)
+	next() (*{{.ModelName}}, error)
 }
 
 // simpleblcok block start
 type simpleResult struct {
-	data    []*TestModel
+	data    []*{{.ModelName}}
 	pointer int
 }
 
-func newSimpleResult(data []*TestModel) *simpleResult {
+func newSimpleResult(data []*{{.ModelName}}) *simpleResult {
 	if data == nil {
-		data = []*TestModel{}
+		data = []*{{.ModelName}}{}
 	}
 	return &simpleResult{
 		data: data,
 	}
 }
 
-func (sr *simpleResult) contains(creative *TestModel) bool {
+func (sr *simpleResult) contains(creative *{{.ModelName}}) bool {
 	index := sort.Search(
 		len(sr.data),
 		func(index int) bool {
@@ -37,7 +42,7 @@ func (sr *simpleResult) len() int {
 	return len(sr.data)
 }
 
-func (sr *simpleResult) next() (*TestModel, error) {
+func (sr *simpleResult) next() (*{{.ModelName}}, error) {
 	if sr.pointer == len(sr.data) {
 		return nil, &StopIterationError{msg: "empty"}
 	}
@@ -85,7 +90,7 @@ func (ir *intesectionResult) len() int {
 	return ir.length
 }
 
-func (ir *intesectionResult) next() (*TestModel, error) {
+func (ir *intesectionResult) next() (*{{.ModelName}}, error) {
 	if ir.length == ir.curCount {
 		return nil, &StopIterationError{msg: "empty"}
 	}
@@ -107,11 +112,24 @@ func (ir *intesectionResult) next() (*TestModel, error) {
 	}
 }
 
-func (ir *intesectionResult) contains(creative *TestModel) bool {
+func (ir *intesectionResult) contains(creative *{{.ModelName}}) bool {
 	for _, e := range ir.results {
 		if !e.contains(creative) {
 			return false
 		}
 	}
 	return true
+}
+`
+
+func GenCreativeSerachResult(gd *GenData, basePath string) error {
+	b := &bytes.Buffer{}
+	b.WriteString(gencCodeHeader)
+
+	t := template.Must(template.New("creativeSerachResulTemplate").Parse(creativeSerachResulTemplate))
+	err := t.Execute(b, gd)
+	if err != nil {
+		return err
+	}
+	return FormatAndWrite(path.Join(basePath, "generated_creative_search_result.go"), b.Bytes())
 }

@@ -38,7 +38,7 @@ func GenQuery(gd *GenData, basePath string) error {
 	codeBuff.WriteString(gencCodeHeader)
 	codeBuff.Write(data)
 
-	err = formatAndWrite(path.Join(basePath, queryPath), codeBuff.Bytes())
+	err = FormatAndWrite(path.Join(basePath, queryPath), codeBuff.Bytes())
 
 	return err
 }

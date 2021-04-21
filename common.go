@@ -6,7 +6,7 @@ import (
 	"golang.org/x/tools/imports"
 )
 
-//go:generate go run cmd/gen.go
+//go:generate go run cmd/gen.go -cfg cmd/searcher.json
 
 type GenData struct {
 	Searchers []struct {
@@ -17,7 +17,7 @@ type GenData struct {
 	ModelName string `json:"ModelName"`
 }
 
-func formatAndWrite(path string, code []byte) error {
+func FormatAndWrite(path string, code []byte) error {
 	code, err := imports.Process(path, code, &imports.Options{
 		FormatOnly: false,
 	})

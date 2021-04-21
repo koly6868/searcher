@@ -32,6 +32,10 @@ func main() {
 
 	err = searcher.GenCreativeSearcher(gd, basePath)
 	closeProgramIfErr(err)
+
+	err = searcher.GenCreativeSerachResult(gd, basePath)
+	closeProgramIfErr(err)
+
 }
 
 func closeProgramIfErr(err error) {
