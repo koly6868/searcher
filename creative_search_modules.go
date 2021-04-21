@@ -3,7 +3,6 @@ package searcher
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 	"text/template"
 )
@@ -26,19 +25,11 @@ func (sm {{.Name}}) find(q *Query) searchResult {
 		sm[q.{{.Key}}])
 }`
 
-const genCodePath = "generated_search_modules.go"
+const serachModulesPath = "generated_search_modules.go"
 
 func GenerateCrativeSearchers(gd *GenData, basePath string) error {
-	f, err := os.Create(path.Join(basePath, genCodePath))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = f.WriteString(gencCodeHeader)
-	if err != nil {
-		return err
-	}
+	codeBuff := &bytes.Buffer{}
+	codeBuff.WriteString(gencCodeHeader)
 
 	for _, e := range gd.Searchers {
 		s, err := genModule(&SearchModuleGenData{
@@ -50,13 +41,11 @@ func GenerateCrativeSearchers(gd *GenData, basePath string) error {
 		if err != nil {
 			return err
 		}
-		_, err = f.Write(s)
-		if err != nil {
-			return err
-		}
+		codeBuff.Write(s)
 	}
+	err := formatAndWrite(path.Join(basePath, serachModulesPath), codeBuff.Bytes())
 
-	return nil
+	return err
 }
 
 type SearchModuleGenData struct {

@@ -2,11 +2,8 @@ package searcher
 
 import (
 	"bytes"
-	"os"
 	"path"
 	"text/template"
-
-	"golang.org/x/tools/imports"
 )
 
 const creativeSearcherPath = "generated_creative_search.go"
@@ -23,9 +20,7 @@ type CreativeSearh struct {
 
 // NewCreativeSearh creates search system.
 // data should no be changed after initialization.
-func NewCreativeSearh(data []TestModel) CreativeSearcher {
-	modules := []searhModule{
-	}
+func NewCreativeSearh(data []TestModel, modules []searhModule) CreativeSearcher {
 
 	for _, module := range modules {
 		module.init(data)
@@ -96,25 +91,11 @@ func GenCreativeSearcher(gd *GenData, basePath string) error {
 		return err
 	}
 
-	_, err = codeBuff.WriteString(gencCodeHeader)
-	if err != nil {
-		return err
-	}
+	codeBuff.WriteString(gencCodeHeader)
+	codeBuff.Write(data)
 
-	_, err = codeBuff.Write(data)
-	code, err := imports.Process(path.Join(basePath, creativeSearcherPath), codeBuff.Bytes(), &imports.Options{
-		FormatOnly: false,
-	})
-	if err != nil {
-		return err
-	}
+	err = formatAndWrite(path.Join(basePath, creativeSearcherPath), codeBuff.Bytes())
 
-	f, err := os.Create(path.Join(basePath, creativeSearcherPath))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	f.Write(code)
 	return err
 }
 

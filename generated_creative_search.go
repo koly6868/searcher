@@ -14,8 +14,7 @@ type CreativeSearh struct {
 	modules []searhModule
 }
 
-func NewCreativeSearh(data []TestModel) CreativeSearcher {
-	modules := []searhModule{}
+func NewCreativeSearh(data []TestModel, modules []searhModule) CreativeSearcher {
 
 	for _, module := range modules {
 		module.init(data)

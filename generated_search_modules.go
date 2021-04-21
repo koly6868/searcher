@@ -1,21 +1,28 @@
-
 package searcher
 
+type nameSearchModule struct {
+	data        map[string][]*TestModel
+	sortSliceFn func([]*TestModel)
+}
 
-
-type NameSearchModule map[string][]*TestModel
-
-func (sm NameSearchModule) init(data []TestModel, sortSliceFn func([]*TestModel)) {
-	for i, e := range data {
-		sm[e.Name] = append(sm[e.Name], &data[i])
-	}
-
-	for k := range sm {
-		sortSliceFn(sm[k])
+func NewNameSearchModule(sortSliceFn func([]*TestModel)) searhModule {
+	return &nameSearchModule{
+		sortSliceFn: sortSliceFn,
+		data:        map[string][]*TestModel{},
 	}
 }
 
-func (sm NameSearchModule) find(q *Query) searchResult {
+func (sm nameSearchModule) init(data []TestModel) {
+	for i, e := range data {
+		sm.data[e.Name] = append(sm.data[e.Name], &data[i])
+	}
+
+	for k := range sm.data {
+		sm.sortSliceFn(sm.data[k])
+	}
+}
+
+func (sm nameSearchModule) find(q *Query) searchResult {
 	return newSimpleResult(
-		sm[q.Name])
+		sm.data[q.Name])
 }

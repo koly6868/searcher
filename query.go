@@ -3,11 +3,8 @@ package searcher
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 	"text/template"
-
-	"golang.org/x/tools/imports"
 )
 
 const queryAnyValue = -1
@@ -32,23 +29,16 @@ func genQuery(gd *GenData) ([]byte, error) {
 }
 
 func GenQuery(gd *GenData, basePath string) error {
-	f, err := os.Create(path.Join(basePath, queryPath))
-	if err != nil {
-		return err
-	}
-
+	codeBuff := &bytes.Buffer{}
 	data, err := genQuery(gd)
 	if err != nil {
 		return err
 	}
 
-	_, err = f.WriteString(gencCodeHeader)
-	if err != nil {
-		return err
-	}
+	codeBuff.WriteString(gencCodeHeader)
+	codeBuff.Write(data)
 
-	_, err = f.Write(data)
-	f.Close()
-	imports.Process(path.Join(basePath, queryPath), nil, nil)
+	err = formatAndWrite(path.Join(basePath, queryPath), codeBuff.Bytes())
+
 	return err
 }
