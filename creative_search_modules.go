@@ -5,24 +5,35 @@ import (
 	"fmt"
 	"path"
 	"text/template"
+	"unicode"
 )
 
 var moduleTemplate = `
-type {{.Name}} map[{{.KeyType}}][]*{{.ModelName}}
+type {{.NameLower}} struct {
+	data        map[{{.KeyType}}][]*{{.ModelName}}
+	sortSliceFn func([]*{{.ModelName}})
+}
 
-func (sm {{.Name}}) init(data []{{.ModelName}}, sortSliceFn func([]*{{.ModelName}})) {
-	for i, e := range data {
-		sm[e.{{.Key}}] = append(sm[e.{{.Key}}], &data[i])
-	}
-
-	for k := range sm {
-		sortSliceFn(sm[k])
+func New{{.Name}}(sortSliceFn func([]*{{.ModelName}})) searhModule {
+	return &{{.NameLower}}{
+		sortSliceFn: sortSliceFn,
+		data:        map[string][]*{{.ModelName}}{},
 	}
 }
 
-func (sm {{.Name}}) find(q *Query) searchResult {
+func (sm {{.NameLower}}) init(data []{{.ModelName}}) {
+	for i, e := range data {
+		sm.data[e.{{.Key}}] = append(sm.data[e.{{.Key}}], &data[i])
+	}
+
+	for k := range sm.data {
+		sm.sortSliceFn(sm.data[k])
+	}
+}
+
+func (sm {{.NameLower}}) find(q *Query) searchResult {
 	return newSimpleResult(
-		sm[q.{{.Key}}])
+		sm.data[q.{{.Key}}])
 }`
 
 const serachModulesPath = "generated_search_modules.go"
@@ -53,6 +64,12 @@ type SearchModuleGenData struct {
 	KeyType   string
 	Key       string
 	ModelName string
+}
+
+func (smgd *SearchModuleGenData) NameLower() string {
+	a := []rune(smgd.Name)
+	a[0] = unicode.ToLower(a[0])
+	return string(a)
 }
 
 func (smgd *SearchModuleGenData) normalize() error {
