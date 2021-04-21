@@ -9,7 +9,8 @@
 ## searcher.json description
 
 - ModelName: name of struct with package (e.g. ```example.TestModell```)
-- searchers: list of searchers with ```Name``` - searcher name, ```Key``` - public field of struct and ```KeyType``` - type of field
+- searchers: list of searchers with ```Name``` - searcher name, ```Key``` - public field of struct and
+ ```KeyType``` - type of field
 
 
 ## Example
