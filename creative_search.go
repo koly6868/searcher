@@ -10,17 +10,17 @@ const creativeSearcherPath = "generated_creative_search.go"
 const creativeSearcherTemplate = `
 // CreativeSearcher ...
 type CreativeSearcher interface {
-	Find(q *Query) ([]TestModel, error)
+	Find(q *Query) ([]{{.ModelName}}, error)
 }
 
 // CreativeSearh ...
 type CreativeSearh struct {
-	modules []searhModule
+	modules []SearhModule
 }
 
 // NewCreativeSearh creates search system.
 // data should no be changed after initialization.
-func NewCreativeSearh(data []TestModel, modules []searhModule) CreativeSearcher {
+func NewCreativeSearh(data []{{.ModelName}}, modules []SearhModule) CreativeSearcher {
 
 	for _, module := range modules {
 		module.init(data)
@@ -32,8 +32,8 @@ func NewCreativeSearh(data []TestModel, modules []searhModule) CreativeSearcher 
 }
 
 // Find ...
-func (cs *CreativeSearh) Find(q *Query) ([]TestModel, error) {
-	teasers := []TestModel{}
+func (cs *CreativeSearh) Find(q *Query) ([]{{.ModelName}}, error) {
+	teasers := []{{.ModelName}}{}
 
 	if cs.modules == nil || len(cs.modules) == 0 {
 		return teasers, &CreativeSearhInitializationError{msg: "no modules"}
@@ -78,8 +78,8 @@ func (cs *CreativeSearh) Find(q *Query) ([]TestModel, error) {
 	return teasers, nil
 }
 
-type searhModule interface {
-	init([]TestModel)
+type SearhModule interface {
+	init([]{{.ModelName}})
 	find(*Query) searchResult
 }
 `
@@ -94,7 +94,7 @@ func GenCreativeSearcher(gd *GenData, basePath string) error {
 	codeBuff.WriteString(gencCodeHeader)
 	codeBuff.Write(data)
 
-	err = formatAndWrite(path.Join(basePath, creativeSearcherPath), codeBuff.Bytes())
+	err = FormatAndWrite(path.Join(basePath, creativeSearcherPath), codeBuff.Bytes())
 
 	return err
 }

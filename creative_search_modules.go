@@ -14,7 +14,7 @@ type {{.NameLower}} struct {
 	sortSliceFn func([]*{{.ModelName}})
 }
 
-func New{{.Name}}(sortSliceFn func([]*{{.ModelName}})) searhModule {
+func New{{.Name}}(sortSliceFn func([]*{{.ModelName}})) SearhModule {
 	return &{{.NameLower}}{
 		sortSliceFn: sortSliceFn,
 		data:        map[string][]*{{.ModelName}}{},
@@ -54,7 +54,7 @@ func GenerateCrativeSearchers(gd *GenData, basePath string) error {
 		}
 		codeBuff.Write(s)
 	}
-	err := formatAndWrite(path.Join(basePath, serachModulesPath), codeBuff.Bytes())
+	err := FormatAndWrite(path.Join(basePath, serachModulesPath), codeBuff.Bytes())
 
 	return err
 }
