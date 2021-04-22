@@ -31,7 +31,7 @@ func main() {
 	err := os.MkdirAll(*genPackageDir, os.ModePerm)
 	onError(err)
 
-	if *loadTemplate && defaultTemplatesDir != *templatesDir {
+	if *loadTemplate && defaultTemplatesDir == *templatesDir {
 		err := GitClone("github.com/koly6868/searcher", *templatesDir)
 		defer os.RemoveAll(*templatesDir)
 		*templatesDir = *templatesDir + "/searcher_templates"
