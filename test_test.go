@@ -1,13 +1,21 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"os"
 	"testing"
 	"text/template"
 )
 
 func TestFillTemplate(t *testing.T) {
+	want := `package searcher_templates
+        
+        	
+	type Name struct {
+		data        map[string][]*TestModel
+		sortSliceFn SliceSortFN
+		searchFn    SliceElementSearchFN
+	};`
 	s := `package searcher_templates
 
 	{{ range .Searchers }}
@@ -15,34 +23,11 @@ func TestFillTemplate(t *testing.T) {
 	   data        map[{{ .KeyType }}][]*{{ $.ModelName }}
 	   sortSliceFn SliceSortFN
 	   searchFn    SliceElementSearchFN
-   }
-   
-   func (sm *{{ .Name }}) init(data []{{ $.ModelName }},
-	   sortSliceFn SliceSortFN,
-	   searchFn SliceElementSearchFN) {
-   
-	   sm.data = map[{{ .KeyType }}][]*{{ $.ModelName }}{}
-	   sm.sortSliceFn = sortSliceFn
-	   sm.searchFn = searchFn
-   
-	   for i, e := range data {
-		   sm.data[e.{{ .Key }}] = append(sm.data[e.{{ .Key }}], &data[i])
-	   }
-   
-	   for k := range sm.data {
-		   sortSliceFn(sm.data[k])
-	   }
-   }
-   
-   func (sm *{{ .Name }}) find(q *Query) searchResult {
-	   return newSimpleResult(
-		   sm.data[q.{{ .Key }}],
-		   sm.searchFn)
-   }
-   
-	{{ end }}`
+   }{{ end }}`
+
 	tpl := template.Must(template.New("ds").Parse(s))
-	err := tpl.Execute(os.Stdout, SearcherConfig{
+	gotB := &bytes.Buffer{}
+	err := tpl.Execute(gotB, SearcherConfig{
 		Searchers: []SeacrherModuleConfig{
 			{
 				Name:    "Name",
@@ -52,8 +37,14 @@ func TestFillTemplate(t *testing.T) {
 		},
 		ModelName: "TestModel",
 	})
+	if err != nil {
+		t.Error(err)
+	}
 
-	t.Error(err)
+	got := gotB.String()
+	if got != want {
+		t.Errorf("want: %s;\n got: %s", want, got)
+	}
 }
 
 func TestPreprocessCodeTemplate(t *testing.T) {

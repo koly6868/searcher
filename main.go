@@ -1,21 +1,37 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/go-git/go-git"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/tools/imports"
 )
 
 func main() {
+	loadTemplate := flag.Bool("l", true, "hz l")
 	templatesDir := flag.String("tmpls", "templates", "hz tpl")
-	genPackageDir := flag.String("dst", "", "hz")
+	genPackageDir := flag.String("dst", "searcher", "hz")
 	configPath := flag.String("cfg", "cfg.json", "hz cfg")
-	err := fillTemplates(templatesDir, *genPackageDir, cfg)
+
+	err := os.MkdirAll(*genPackageDir, os.ModePerm)
+	onError(err)
+
+	if *loadTemplate {
+		err := GitClone("github.com/koly6868/searcher", *templatesDir)
+		onError(err)
+	}
+	defer os.RemoveAll(*templatesDir)
+
+	cfg, err := readConfig(*configPath)
+	onError(err)
+
+	err = fillTemplates(*templatesDir, *genPackageDir, cfg)
 	onError(err)
 }
 
@@ -58,6 +74,22 @@ func onError(err error) {
 	}
 }
 
-func readConfig(path string) interface{} {
+func readConfig(path string) (interface{}, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	cfg := &SearcherConfig{}
+	err = json.Unmarshal(data, cfg)
+	return cfg, err
+}
 
+func GitClone(repoPath, directory string) error {
+	_, err := git.PlainClone(directory, false, &git.CloneOptions{
+		URL: "https://" + repoPath,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
