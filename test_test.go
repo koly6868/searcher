@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 	"text/template"
 )
@@ -12,22 +11,22 @@ func TestFillTemplate(t *testing.T) {
 	s := `package searcher_templates
 
 	{{ range .Searchers }}
-   type {{ .SearcherName }} struct {
-	   data        map[_TemplateKeyType][]*{{ .ModelName }}
+   type {{ .Name }} struct {
+	   data        map[{{ .KeyType }}][]*{{ $.ModelName }}
 	   sortSliceFn SliceSortFN
 	   searchFn    SliceElementSearchFN
    }
    
-   func (sm *{{ .SearcherName }}) init(data []{{ .ModelName }},
+   func (sm *{{ .Name }}) init(data []{{ $.ModelName }},
 	   sortSliceFn SliceSortFN,
 	   searchFn SliceElementSearchFN) {
    
-	   sm.data = map[_TemplateKeyType][]*{{ .ModelName }}{}
+	   sm.data = map[{{ .KeyType }}][]*{{ $.ModelName }}{}
 	   sm.sortSliceFn = sortSliceFn
 	   sm.searchFn = searchFn
    
 	   for i, e := range data {
-		   sm.data[e._TemplateKey] = append(sm.data[e._TemplateKey], &data[i])
+		   sm.data[e.{{ .Key }}] = append(sm.data[e.{{ .Key }}], &data[i])
 	   }
    
 	   for k := range sm.data {
@@ -35,9 +34,9 @@ func TestFillTemplate(t *testing.T) {
 	   }
    }
    
-   func (sm *{{ .SearcherName }}) find(q *Query) searchResult {
+   func (sm *{{ .Name }}) find(q *Query) searchResult {
 	   return newSimpleResult(
-		   sm.data[q._TemplateKey],
+		   sm.data[q.{{ .Key }}],
 		   sm.searchFn)
    }
    
@@ -46,6 +45,7 @@ func TestFillTemplate(t *testing.T) {
 	err := tpl.Execute(os.Stdout, SearcherConfig{
 		Searchers: []SeacrherModuleConfig{
 			{
+				Name:    "Name",
 				KeyType: "string",
 				Key:     "Name",
 			},
@@ -59,17 +59,56 @@ func TestFillTemplate(t *testing.T) {
 func TestPreprocessCodeTemplate(t *testing.T) {
 	s := `package searcher_templates
 
-	type Query struct {
-		Count int
-		//# {{ range $key, $value := .searchers }}
-		_TemplateKey _TemplateKeyType
-		//# {{ end }}
+	//# {{ range .Searchers }}
+	type _TemplateSearcherName struct {
+		data        map[_TemplateSearcherKeyType][]*_TemplateModelName
+		sortSliceFn SliceSortFN
+		searchFn    SliceElementSearchFN
 	}
+	
+	func (sm *_TemplateSearcherName) init(data []_TemplateModelName,
+		sortSliceFn SliceSortFN,
+		searchFn SliceElementSearchFN) {
+	
+		sm.data = map[_TemplateSearcherKeyType][]*_TemplateModelName{}
+		sm.sortSliceFn = sortSliceFn
+		sm.searchFn = searchFn
+	
+		for i, e := range data {
+			sm.data[e._TemplateSearcherKey] = append(sm.data[e._TemplateSearcherKey], &data[i])
+		}
+	
+		for k := range sm.data {
+			sortSliceFn(sm.data[k])
+		}
+	}
+	
+	func (sm *_TemplateSearcherName) find(q *Query) searchResult {
+		return newSimpleResult(
+			sm.data[q._TemplateSearcherKey],
+			sm.searchFn)
+	}
+	
+	//# {{ end }}
+	
 	`
 	res := preprocessCodeTemplate(s)
 
 	fmt.Println(res)
 	t.Error("err")
+}
+
+func TestExtractRangeVar(t *testing.T) {
+	want := "Searchers"
+	s := `//# {{ range  .Searchers }}
+		_TemplateSearcherKey _TemplateSearcherKeyType
+		//# {{ end }}`
+
+	got := extractRangeIterVariable(s)
+
+	if got != want {
+		t.Errorf("want: %s;\n got: %s", want, got)
+	}
 }
 
 func TestPreprocessRangeStatements(t *testing.T) {
@@ -78,7 +117,7 @@ func TestPreprocessRangeStatements(t *testing.T) {
 	type Query struct {
 		Count int
 		//# {{ range $key, $value := .Searchers }}
-		_TemplateKey _TemplateKeyType
+		_TemplateSearcherKey _TemplateSearcherKeyType
 		//# {{ end }}
 	}
 	`
@@ -90,79 +129,11 @@ func TestPreprocessRangeStatements(t *testing.T) {
 
 func TestPrerpocessRangeBodyTemplate(t *testing.T) {
 	s := `//# {{ range .Searchers }}
-		_TemplateKey _TemplateKeyType
+		_TemplateSearcherKey _TemplateSearcherKeyType
 		//# {{ end }}`
 
-	res := prerpocessRangeBodyTemplate(s)
+	res := prerpocessTemplateVars(s, "")
 
 	fmt.Println(res)
-	t.Error("err")
-}
-func TestExtractRangeKeyValue(t *testing.T) {
-	s := `//# {{ range $key, $value := .Searchers }}
-		_TemplateKey _TemplateKeyType
-		//# {{ end }}`
-
-	res := extractRangeKeyValue(s)
-	for _, e := range res {
-		fmt.Println(s[e[0]:e[1]])
-	}
-	fmt.Printf("%#v\n", res)
-	t.Error("err")
-}
-
-func TestTemp(t *testing.T) {
-	s := `{{ range .Vals}}
-		{{.Name}}
-		{{ end }}`
-
-	tpl := template.Must(template.New("ds").Parse(s))
-	tpl.Execute(os.Stdout, map[string][]map[string]string{
-		"Vals": []map[string]string{
-			{"Name": "Shine"},
-		},
-	})
-
-	t.Error("err")
-}
-
-func TestFindRangeBlocks(t *testing.T) {
-	s := `package searcher_templates
-
-	type Query struct {
-		Count int
-		//# {{ range $key, $value := .Searchers }}
-		_TemplateKey _TemplateKeyType
-		//# {{ end }}
-	}
-	`
-	res := findRangeBlocks(s)
-
-	for _, e := range res {
-		fmt.Println(s[e[0]:e[1]])
-	}
-	fmt.Printf("%#v\n", res)
-	t.Error("err")
-}
-
-func TestRg(t *testing.T) {
-	s := `package searcher_templates
-
-	type Query struct {
-		Count int
-		//# {{ range $key, $value := .Searchers }}
-		_TemplateKey _TemplateKeyType
-		//# {{ end }}
-	}
-	`
-	r, err := regexp.Compile(`_Template[[:alnum:]]*[\s\n]`)
-	if err != nil {
-		t.Error(err)
-	}
-	res := r.FindAllIndex([]byte(s), -1)
-	for _, e := range res {
-		fmt.Println(s[e[0]:e[1]])
-	}
-	fmt.Printf("%#v\n", res)
 	t.Error("err")
 }

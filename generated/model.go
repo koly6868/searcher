@@ -1,12 +1,7 @@
 package searcher_templates
 
 type TestModel struct {
-	 
-	Name string
-	 
+	Name String
 }
 
- 
-type string string
-
- 
+type String string

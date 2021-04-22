@@ -2,11 +2,11 @@ package searcher_templates
 
 type _TemplateModelName struct {
 	//# {{ range  .Searchers }}
-	_TemplateKey _TemplateKeyType
+	_TemplateSearcherKey _TemplateSearcherKeyType
 	//# {{ end }}
 }
 
 //# {{ range  .Searchers }}
-type _TemplateKeyType string
+type _TemplateSearcherKeyType string
 
 //# {{ end }}

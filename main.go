@@ -1,29 +1,25 @@
 package main
 
 import (
+	"flag"
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/tools/imports"
 )
 
 func main() {
-	templatesDir := "searcher_templates"
-	cfg := &SearcherConfig{
-		Searchers: []SeacrherModuleConfig{
-			{
-				KeyType: "string",
-				Key:     "Name",
-			},
-		},
-		ModelName: "TestModel",
-	}
-	err := fillTemplates(templatesDir, "generated", cfg)
+	templatesDir := flag.String("tmpls", "templates", "hz tpl")
+	genPackageDir := flag.String("dst", "", "hz")
+	configPath := flag.String("cfg", "cfg.json", "hz cfg")
+	err := fillTemplates(templatesDir, *genPackageDir, cfg)
 	onError(err)
 }
 
-func fillTemplates(templatesDir string, targetDir string, cfg *SearcherConfig) error {
+func fillTemplates(templatesDir string, targetDir string, cfg interface{}) error {
 	log.Info("generating starts")
 
 	fileInfos, err := ioutil.ReadDir(templatesDir)
@@ -31,11 +27,12 @@ func fillTemplates(templatesDir string, targetDir string, cfg *SearcherConfig) e
 		return err
 	}
 	for _, info := range fileInfos {
-		if !EndsWith(info.Name(), ".go") {
+		if !strings.HasSuffix(info.Name(), ".go") {
 			continue
 		}
 		log.Infof("%s is processing", info.Name())
 		filePath := path.Join(templatesDir, info.Name())
+		saveFilePath := path.Join(targetDir, info.Name())
 		data, err := ioutil.ReadFile(filePath)
 		if err != nil {
 			return err
@@ -44,7 +41,11 @@ func fillTemplates(templatesDir string, targetDir string, cfg *SearcherConfig) e
 		dataStr := string(data)
 		dataStr = preprocessCodeTemplate(dataStr)
 		dataStr = fillCodeTemplate(dataStr, cfg)
-		ioutil.WriteFile(path.Join(targetDir, info.Name()), []byte(dataStr), os.ModePerm)
+		data, err = imports.Process(saveFilePath, []byte(dataStr), nil)
+		if err != nil {
+			return err
+		}
+		ioutil.WriteFile(saveFilePath, data, os.ModePerm)
 		log.Infof("%s has been processed", info.Name())
 	}
 
@@ -55,4 +56,8 @@ func onError(err error) {
 	if err != nil {
 		panic("top err " + err.Error())
 	}
+}
+
+func readConfig(path string) interface{} {
+
 }
