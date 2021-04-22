@@ -2,14 +2,14 @@
     "searchers" : [
         {
             "Name":      "Name",
-            "KeyType":   "String",
+            "KeyType":   "string",
             "Key":       "Name"
         },
         {
             "Name":      "Age",
-            "KeyType":   "Int",
+            "KeyType":   "int",
             "Key":       "Age"
         }
     ],
-    "ModelName": "TestModel"
+    "ModelName": "example.Person"
 }

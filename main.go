@@ -14,8 +14,10 @@ import (
 )
 
 func main() {
+	defaultTemplatesDir := "templates"
+
 	loadTemplate := flag.Bool("l", true, "if load templates from github")
-	templatesDir := flag.String("tmpls", "templates", "template direcory")
+	templatesDir := flag.String("tmpls", defaultTemplatesDir, "template direcory")
 	genPackageDir := flag.String("dst", "searcher", "gen destenation directory")
 	configPath := flag.String("cfg", "cfg.json", "config path")
 	help := flag.String("help", "help", "help")
@@ -29,7 +31,7 @@ func main() {
 	err := os.MkdirAll(*genPackageDir, os.ModePerm)
 	onError(err)
 
-	if *loadTemplate {
+	if *loadTemplate && defaultTemplatesDir != *templatesDir {
 		err := GitClone("github.com/koly6868/searcher", *templatesDir)
 		defer os.RemoveAll(*templatesDir)
 		*templatesDir = *templatesDir + "/searcher_templates"
@@ -65,10 +67,7 @@ func fillTemplates(templatesDir string, targetDir string, cfg interface{}) error
 		dataStr := string(data)
 		dataStr = preprocessCodeTemplate(dataStr)
 		dataStr = fillCodeTemplate(dataStr, cfg)
-		data, err = imports.Process(saveFilePath, []byte(dataStr), nil)
-		if err != nil {
-			return err
-		}
+		data, _ = imports.Process(saveFilePath, []byte(dataStr), nil)
 		ioutil.WriteFile(saveFilePath, data, os.ModePerm)
 		log.Infof("%s has been processed", info.Name())
 	}
