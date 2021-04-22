@@ -1,4 +1,4 @@
-package searcher
+package searcher_templates
 
 import "errors"
 

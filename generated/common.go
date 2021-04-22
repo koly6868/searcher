@@ -1,10 +1,28 @@
-package searcher
+package searcher_templates
 
 import (
 	"os"
 
 	"golang.org/x/tools/imports"
 )
+
+const queryAnyValue = -1
+
+type SliceSortFN func([]*_TemplateModelName)
+type SliceElementSearchFN func([]*_TemplateModelName, *_TemplateModelName) bool
+type SearhModule interface {
+	init(
+		[]_TemplateModelName,
+		SliceSortFN,
+		SliceElementSearchFN,
+	)
+	find(*Query) searchResult
+}
+
+// Searcher ...
+type Searcher interface {
+	Find(q *Query) ([]_TemplateModelName, error)
+}
 
 type GenData struct {
 	Searchers []struct {
@@ -35,7 +53,7 @@ func FormatAndWrite(path string, code []byte) error {
 
 const pkg = "searcher"
 const gencCodeHeader = `
-package searcher
+package searcher_templates
 
 
 `

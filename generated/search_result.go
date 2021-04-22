@@ -1,26 +1,25 @@
-package searcher
+package searcher_templates
 
 import (
 	"sort"
-
-	"github.com/koly6868/searcher/example"
 )
 
 type searchResult interface {
-	contains(*example.TestModel) bool
+	contains(*_TemplateModelName) bool
 	len() int
-	next() (*example.TestModel, error)
+	next() (*_TemplateModelName, error)
 }
 
+// simpleblcok block start
 type simpleResult struct {
-	data     []*example.TestModel
+	data     []*_TemplateModelName
 	pointer  int
-	searchFn func([]*example.TestModel, *example.TestModel) int
+	searchFn SliceElementSearchFN
 }
 
-func newSimpleResult(data []*example.TestModel, searchFn func([]*example.TestModel, *example.TestModel) int) *simpleResult {
+func newSimpleResult(data []*_TemplateModelName, searchFn SliceElementSearchFN) *simpleResult {
 	if data == nil {
-		data = []*example.TestModel{}
+		data = []*_TemplateModelName{}
 	}
 	return &simpleResult{
 		data:     data,
@@ -28,17 +27,15 @@ func newSimpleResult(data []*example.TestModel, searchFn func([]*example.TestMod
 	}
 }
 
-func (sr *simpleResult) contains(element *example.TestModel) bool {
-	index := sr.searchFn(sr.data, element)
-
-	return (index < len(sr.data)) && (sr.data[index].ID == element.ID)
+func (sr *simpleResult) contains(element *_TemplateModelName) bool {
+	return sr.searchFn(sr.data, element)
 }
 
 func (sr *simpleResult) len() int {
 	return len(sr.data)
 }
 
-func (sr *simpleResult) next() (*example.TestModel, error) {
+func (sr *simpleResult) next() (*_TemplateModelName, error) {
 	if sr.pointer == len(sr.data) {
 		return nil, &StopIterationError{msg: "empty"}
 	}
@@ -47,6 +44,9 @@ func (sr *simpleResult) next() (*example.TestModel, error) {
 	return res, nil
 }
 
+// simpleblcok block end
+
+// intesectionResult block start
 type intesectionResult struct {
 	results  []searchResult
 	length   int
@@ -58,7 +58,7 @@ func newIntesectionResult(results []searchResult) searchResult {
 	if len(results) == 0 {
 		results = []searchResult{}
 	} else {
-
+		// to keep oreder in results
 		sortedResults := make([]searchResult, len(results))
 		copy(sortedResults, results)
 
@@ -83,7 +83,7 @@ func (ir *intesectionResult) len() int {
 	return ir.length
 }
 
-func (ir *intesectionResult) next() (*example.TestModel, error) {
+func (ir *intesectionResult) next() (*_TemplateModelName, error) {
 	if ir.length == ir.curCount {
 		return nil, &StopIterationError{msg: "empty"}
 	}
@@ -105,7 +105,7 @@ func (ir *intesectionResult) next() (*example.TestModel, error) {
 	}
 }
 
-func (ir *intesectionResult) contains(element *example.TestModel) bool {
+func (ir *intesectionResult) contains(element *_TemplateModelName) bool {
 	for _, e := range ir.results {
 		if !e.contains(element) {
 			return false

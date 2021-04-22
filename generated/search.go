@@ -1,35 +1,34 @@
-package searcher
+package searcher_templates
 
 import (
 	"sort"
 
-	"github.com/koly6868/searcher/example"
 	"github.com/labstack/gommon/log"
 )
 
-type Searcher interface {
-	Find(q *Query) ([]example.TestModel, error)
-}
-
-type Searher struct {
+// searher ...
+type searher struct {
 	modules []SearhModule
 }
 
-func NewSearher(data []example.TestModel,
+// NewSearher creates search system.
+// data should no be changed after initialization.
+func NewSearher(data []_TemplateModelName,
 	modules []SearhModule,
-	sortSliceFn func([]*example.TestModel),
-	searchFn func([]*example.TestModel, *example.TestModel) int) Searcher {
+	sortSliceFn func([]*_TemplateModelName),
+	searchFn SliceElementSearchFN) Searcher {
 	for _, module := range modules {
 		module.init(data, sortSliceFn, searchFn)
 	}
 
-	return &Searher{
+	return &searher{
 		modules: modules,
 	}
 }
 
-func (cs *Searher) Find(q *Query) ([]example.TestModel, error) {
-	teasers := []example.TestModel{}
+// Find ...
+func (cs *searher) Find(q *Query) ([]_TemplateModelName, error) {
+	teasers := []_TemplateModelName{}
 
 	if cs.modules == nil || len(cs.modules) == 0 {
 		return teasers, &SearherInitializationError{msg: "no modules"}
@@ -50,7 +49,7 @@ func (cs *Searher) Find(q *Query) ([]example.TestModel, error) {
 	for i := 0; i < n; {
 		element, err := results[0].next()
 		if err != nil {
-
+			// early tteration stop
 			if _, ok := err.(*StopIterationError); ok {
 				break
 			}
@@ -72,13 +71,4 @@ func (cs *Searher) Find(q *Query) ([]example.TestModel, error) {
 	}
 
 	return teasers, nil
-}
-
-type SearhModule interface {
-	init(
-		[]example.TestModel,
-		func([]*example.TestModel),
-		func([]*example.TestModel, *example.TestModel) int,
-	)
-	find(*Query) searchResult
 }

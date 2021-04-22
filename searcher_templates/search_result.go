@@ -1,47 +1,41 @@
-package searcher
+package searcher_templates
 
 import (
-	"bytes"
-	"path"
-	"text/template"
+	"sort"
 )
 
-const serachResulPath = "generated_search_result.go"
-const serachResulTemplate = `
 type searchResult interface {
-	contains(*{{.ModelName}}) bool
+	contains(*_TemplateModelName) bool
 	len() int
-	next() (*{{.ModelName}}, error)
+	next() (*_TemplateModelName, error)
 }
 
 // simpleblcok block start
 type simpleResult struct {
-	data    []*{{.ModelName}}
-	pointer int
-	searchFn func([]*example.TestModel, *example.TestModel) int
+	data     []*_TemplateModelName
+	pointer  int
+	searchFn SliceElementSearchFN
 }
 
-func newSimpleResult(data []*{{.ModelName}}, searchFn func([]*example.TestModel, *example.TestModel) int) *simpleResult {
+func newSimpleResult(data []*_TemplateModelName, searchFn SliceElementSearchFN) *simpleResult {
 	if data == nil {
-		data = []*{{.ModelName}}{}
+		data = []*_TemplateModelName{}
 	}
 	return &simpleResult{
-		data: data,
-		searchFn : searchFn,
+		data:     data,
+		searchFn: searchFn,
 	}
 }
 
-func (sr *simpleResult) contains(element *{{.ModelName}}) bool {
-	index := sr.searchFn(sr.data, element)
-
-	return (index < len(sr.data)) && (sr.data[index].ID == element.ID)
+func (sr *simpleResult) contains(element *_TemplateModelName) bool {
+	return sr.searchFn(sr.data, element)
 }
 
 func (sr *simpleResult) len() int {
 	return len(sr.data)
 }
 
-func (sr *simpleResult) next() (*{{.ModelName}}, error) {
+func (sr *simpleResult) next() (*_TemplateModelName, error) {
 	if sr.pointer == len(sr.data) {
 		return nil, &StopIterationError{msg: "empty"}
 	}
@@ -89,7 +83,7 @@ func (ir *intesectionResult) len() int {
 	return ir.length
 }
 
-func (ir *intesectionResult) next() (*{{.ModelName}}, error) {
+func (ir *intesectionResult) next() (*_TemplateModelName, error) {
 	if ir.length == ir.curCount {
 		return nil, &StopIterationError{msg: "empty"}
 	}
@@ -111,24 +105,11 @@ func (ir *intesectionResult) next() (*{{.ModelName}}, error) {
 	}
 }
 
-func (ir *intesectionResult) contains(element *{{.ModelName}}) bool {
+func (ir *intesectionResult) contains(element *_TemplateModelName) bool {
 	for _, e := range ir.results {
 		if !e.contains(element) {
 			return false
 		}
 	}
 	return true
-}
-`
-
-func GenElementSerachResult(gd *GenData, basePath string) error {
-	b := &bytes.Buffer{}
-	b.WriteString(gencCodeHeader)
-
-	t := template.Must(template.New("serachResultTemplate").Parse(serachResulTemplate))
-	err := t.Execute(b, gd)
-	if err != nil {
-		return err
-	}
-	return FormatAndWrite(path.Join(basePath, serachResulPath), b.Bytes())
 }
