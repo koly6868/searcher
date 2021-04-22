@@ -10,11 +10,20 @@ import (
 
 func main() {
 	templatesDir := "searcher_templates"
-	err := fillTemplates(templatesDir, "generated")
+	cfg := &SearcherConfig{
+		Searchers: []SeacrherModuleConfig{
+			{
+				KeyType: "string",
+				Key:     "Name",
+			},
+		},
+		ModelName: "TestModel",
+	}
+	err := fillTemplates(templatesDir, "generated", cfg)
 	onError(err)
 }
 
-func fillTemplates(templatesDir string, targetDir string) error {
+func fillTemplates(templatesDir string, targetDir string, cfg *SearcherConfig) error {
 	log.Info("generating starts")
 
 	fileInfos, err := ioutil.ReadDir(templatesDir)
@@ -34,6 +43,7 @@ func fillTemplates(templatesDir string, targetDir string) error {
 
 		dataStr := string(data)
 		dataStr = preprocessCodeTemplate(dataStr)
+		dataStr = fillCodeTemplate(dataStr, cfg)
 		ioutil.WriteFile(path.Join(targetDir, info.Name()), []byte(dataStr), os.ModePerm)
 		log.Infof("%s has been processed", info.Name())
 	}

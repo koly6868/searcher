@@ -8,11 +8,11 @@ import (
 
 const queryAnyValue = -1
 
-type SliceSortFN func([]*_TemplateModelName)
-type SliceElementSearchFN func([]*_TemplateModelName, *_TemplateModelName) bool
+type SliceSortFN func([]*TestModel)
+type SliceElementSearchFN func([]*TestModel, *TestModel) bool
 type SearhModule interface {
 	init(
-		[]_TemplateModelName,
+		[]TestModel,
 		SliceSortFN,
 		SliceElementSearchFN,
 	)
@@ -21,7 +21,7 @@ type SearhModule interface {
 
 // Searcher ...
 type Searcher interface {
-	Find(q *Query) ([]_TemplateModelName, error)
+	Find(q *Query) ([]TestModel, error)
 }
 
 type GenData struct {

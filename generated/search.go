@@ -13,9 +13,9 @@ type searher struct {
 
 // NewSearher creates search system.
 // data should no be changed after initialization.
-func NewSearher(data []_TemplateModelName,
+func NewSearher(data []TestModel,
 	modules []SearhModule,
-	sortSliceFn func([]*_TemplateModelName),
+	sortSliceFn func([]*TestModel),
 	searchFn SliceElementSearchFN) Searcher {
 	for _, module := range modules {
 		module.init(data, sortSliceFn, searchFn)
@@ -27,8 +27,8 @@ func NewSearher(data []_TemplateModelName,
 }
 
 // Find ...
-func (cs *searher) Find(q *Query) ([]_TemplateModelName, error) {
-	teasers := []_TemplateModelName{}
+func (cs *searher) Find(q *Query) ([]TestModel, error) {
+	teasers := []TestModel{}
 
 	if cs.modules == nil || len(cs.modules) == 0 {
 		return teasers, &SearherInitializationError{msg: "no modules"}

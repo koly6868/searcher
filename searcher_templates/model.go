@@ -6,4 +6,7 @@ type _TemplateModelName struct {
 	//# {{ end }}
 }
 
+//# {{ range  .Searchers }}
 type _TemplateKeyType string
+
+//# {{ end }}

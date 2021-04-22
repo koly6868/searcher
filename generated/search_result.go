@@ -5,21 +5,21 @@ import (
 )
 
 type searchResult interface {
-	contains(*_TemplateModelName) bool
+	contains(*TestModel) bool
 	len() int
-	next() (*_TemplateModelName, error)
+	next() (*TestModel, error)
 }
 
 // simpleblcok block start
 type simpleResult struct {
-	data     []*_TemplateModelName
+	data     []*TestModel
 	pointer  int
 	searchFn SliceElementSearchFN
 }
 
-func newSimpleResult(data []*_TemplateModelName, searchFn SliceElementSearchFN) *simpleResult {
+func newSimpleResult(data []*TestModel, searchFn SliceElementSearchFN) *simpleResult {
 	if data == nil {
-		data = []*_TemplateModelName{}
+		data = []*TestModel{}
 	}
 	return &simpleResult{
 		data:     data,
@@ -27,7 +27,7 @@ func newSimpleResult(data []*_TemplateModelName, searchFn SliceElementSearchFN) 
 	}
 }
 
-func (sr *simpleResult) contains(element *_TemplateModelName) bool {
+func (sr *simpleResult) contains(element *TestModel) bool {
 	return sr.searchFn(sr.data, element)
 }
 
@@ -35,7 +35,7 @@ func (sr *simpleResult) len() int {
 	return len(sr.data)
 }
 
-func (sr *simpleResult) next() (*_TemplateModelName, error) {
+func (sr *simpleResult) next() (*TestModel, error) {
 	if sr.pointer == len(sr.data) {
 		return nil, &StopIterationError{msg: "empty"}
 	}
@@ -83,7 +83,7 @@ func (ir *intesectionResult) len() int {
 	return ir.length
 }
 
-func (ir *intesectionResult) next() (*_TemplateModelName, error) {
+func (ir *intesectionResult) next() (*TestModel, error) {
 	if ir.length == ir.curCount {
 		return nil, &StopIterationError{msg: "empty"}
 	}
@@ -105,7 +105,7 @@ func (ir *intesectionResult) next() (*_TemplateModelName, error) {
 	}
 }
 
-func (ir *intesectionResult) contains(element *_TemplateModelName) bool {
+func (ir *intesectionResult) contains(element *TestModel) bool {
 	for _, e := range ir.results {
 		if !e.contains(element) {
 			return false

@@ -11,23 +11,49 @@ import (
 func TestFillTemplate(t *testing.T) {
 	s := `package searcher_templates
 
-	type Query struct {
-		Count int
-		 {{ range .Searchers }}
-		{{ .Key }} {{ .KeyType }}
-		 {{ end }}
-	}`
+	{{ range .Searchers }}
+   type {{ .SearcherName }} struct {
+	   data        map[_TemplateKeyType][]*{{ .ModelName }}
+	   sortSliceFn SliceSortFN
+	   searchFn    SliceElementSearchFN
+   }
+   
+   func (sm *{{ .SearcherName }}) init(data []{{ .ModelName }},
+	   sortSliceFn SliceSortFN,
+	   searchFn SliceElementSearchFN) {
+   
+	   sm.data = map[_TemplateKeyType][]*{{ .ModelName }}{}
+	   sm.sortSliceFn = sortSliceFn
+	   sm.searchFn = searchFn
+   
+	   for i, e := range data {
+		   sm.data[e._TemplateKey] = append(sm.data[e._TemplateKey], &data[i])
+	   }
+   
+	   for k := range sm.data {
+		   sortSliceFn(sm.data[k])
+	   }
+   }
+   
+   func (sm *{{ .SearcherName }}) find(q *Query) searchResult {
+	   return newSimpleResult(
+		   sm.data[q._TemplateKey],
+		   sm.searchFn)
+   }
+   
+	{{ end }}`
 	tpl := template.Must(template.New("ds").Parse(s))
-	tpl.Execute(os.Stdout, SearcherConfig{
+	err := tpl.Execute(os.Stdout, SearcherConfig{
 		Searchers: []SeacrherModuleConfig{
 			{
 				KeyType: "string",
 				Key:     "Name",
 			},
 		},
+		ModelName: "TestModel",
 	})
 
-	t.Error("err")
+	t.Error(err)
 }
 
 func TestPreprocessCodeTemplate(t *testing.T) {

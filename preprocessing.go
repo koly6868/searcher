@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"text/template"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -39,6 +40,14 @@ type SeacrherModuleConfig struct {
 	Key     string `json:"Key"`
 }
 
+func fillCodeTemplate(tmpl string, cfg *SearcherConfig) string {
+	tpl := template.Must(template.New("ds").Parse(tmpl))
+	b := &bytes.Buffer{}
+	tpl.Execute(b, cfg)
+
+	return b.String()
+}
+
 func preprocessCodeTemplate(tmpl string) string {
 	tmpl = preprocessRangeStatements(tmpl)
 	tmpl = strings.ReplaceAll(tmpl, "//#", "")
@@ -46,25 +55,7 @@ func preprocessCodeTemplate(tmpl string) string {
 }
 
 func preprocessRangeStatements(tmpl string) string {
-	inds := findRangeBlocks(tmpl)
-	if len(inds) == 0 {
-		return tmpl
-	}
-	log.Infof("found %d range blocks", len(inds))
-
-	res := bytes.Buffer{}
-	last := 0
-	for _, rangeBlockInds := range inds {
-		res.WriteString(tmpl[last:rangeBlockInds[0]])
-
-		rangeBlock := tmpl[rangeBlockInds[0]:rangeBlockInds[1]]
-		rangeBlock = prerpocessRangeBodyTemplate(rangeBlock)
-
-		res.WriteString(rangeBlock)
-		last = rangeBlockInds[1]
-	}
-	res.WriteString(tmpl[last:])
-	return res.String()
+	return prerpocessRangeBodyTemplate(tmpl)
 }
 
 func findRangeBlocks(s string) [][]int {
