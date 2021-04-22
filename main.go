@@ -14,19 +14,27 @@ import (
 )
 
 func main() {
-	loadTemplate := flag.Bool("l", true, "hz l")
-	templatesDir := flag.String("tmpls", "templates", "hz tpl")
-	genPackageDir := flag.String("dst", "searcher", "hz")
-	configPath := flag.String("cfg", "cfg.json", "hz cfg")
+	loadTemplate := flag.Bool("l", true, "if load templates from github")
+	templatesDir := flag.String("tmpls", "templates", "template direcory")
+	genPackageDir := flag.String("dst", "searcher", "gen destenation directory")
+	configPath := flag.String("cfg", "cfg.json", "config path")
+	help := flag.String("help", "help", "help")
+	flag.Parse()
+
+	if *help == "" {
+		flag.Usage()
+		return
+	}
 
 	err := os.MkdirAll(*genPackageDir, os.ModePerm)
 	onError(err)
 
 	if *loadTemplate {
 		err := GitClone("github.com/koly6868/searcher", *templatesDir)
+		defer os.RemoveAll(*templatesDir)
+		*templatesDir = *templatesDir + "/searcher_templates"
 		onError(err)
 	}
-	defer os.RemoveAll(*templatesDir)
 
 	cfg, err := readConfig(*configPath)
 	onError(err)

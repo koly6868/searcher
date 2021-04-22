@@ -1,2 +1,2 @@
 generate:
-	go run main.go utils.go preprocessing.go
+	go run main.go preprocessing.go config.go
