@@ -1,4 +1,4 @@
-package searcher_templates
+package _TemplatePackageName
 
 //# {{ range .Searchers }}
 type _TemplateSearcherName struct {

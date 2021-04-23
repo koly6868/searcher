@@ -34,7 +34,7 @@ func main() {
 	if *loadTemplate && defaultTemplatesDir == *templatesDir {
 		err := GitClone("github.com/koly6868/searcher", *templatesDir)
 		defer os.RemoveAll(*templatesDir)
-		*templatesDir = *templatesDir + "/searcher_templates"
+		*templatesDir = *templatesDir + "/_TemplatePackageName"
 		onError(err)
 	}
 
@@ -46,6 +46,7 @@ func main() {
 }
 
 func fillTemplates(templatesDir string, targetDir string, cfg interface{}) error {
+	ignoreFiles := []string{"model.go"}
 	log.Info("generating starts")
 
 	fileInfos, err := ioutil.ReadDir(templatesDir)
@@ -53,7 +54,7 @@ func fillTemplates(templatesDir string, targetDir string, cfg interface{}) error
 		return err
 	}
 	for _, info := range fileInfos {
-		if !strings.HasSuffix(info.Name(), ".go") {
+		if !strings.HasSuffix(info.Name(), ".go") || strInArr(info.Name(), ignoreFiles) {
 			continue
 		}
 		log.Infof("%s is processing", info.Name())
@@ -67,7 +68,11 @@ func fillTemplates(templatesDir string, targetDir string, cfg interface{}) error
 		dataStr := string(data)
 		dataStr = preprocessCodeTemplate(dataStr)
 		dataStr = fillCodeTemplate(dataStr, cfg)
-		data, _ = imports.Process(saveFilePath, []byte(dataStr), nil)
+		data, err = imports.Process(saveFilePath, []byte(dataStr), nil)
+		if err != nil {
+			log.Error(err)
+			data = []byte(dataStr)
+		}
 		ioutil.WriteFile(saveFilePath, data, os.ModePerm)
 		log.Infof("%s has been processed", info.Name())
 	}
@@ -99,4 +104,13 @@ func GitClone(repoPath, directory string) error {
 		return err
 	}
 	return nil
+}
+
+func strInArr(e string, arr []string) bool {
+	for _, ce := range arr {
+		if e == ce {
+			return true
+		}
+	}
+	return false
 }
